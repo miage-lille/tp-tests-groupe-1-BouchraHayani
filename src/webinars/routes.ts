@@ -11,18 +11,19 @@ export async function webinarRoutes(
   const changeSeatsUseCase = container.getChangeSeatsUseCase();
 
   fastify.post<{
-    Body: { seats: string };
+    Body: { seats: string; userId: string };
     Params: { id: string };
   }>('/webinars/:id/seats', {}, async (request, reply) => {
     const changeSeatsCommand = {
       seats: parseInt(request.body.seats, 10),
       webinarId: request.params.id,
       user: new User({
-        id: 'test-user',
+        id: request.body.userId, 
         email: 'test@test.com',
         password: 'fake',
       }),
     };
+    
 
     try {
       await changeSeatsUseCase.execute(changeSeatsCommand);
@@ -32,7 +33,7 @@ export async function webinarRoutes(
         return reply.status(404).send({ error: err.message });
       }
       if (err instanceof WebinarNotOrganizerException) {
-        return reply.status(401).send({ error: err.message });
+        return reply.status(403).send({ error: err.message }); 
       }
       reply.status(500).send({ error: 'An error occurred' });
     }
